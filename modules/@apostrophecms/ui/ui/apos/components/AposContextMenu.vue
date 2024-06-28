@@ -54,7 +54,7 @@ import {
   computePosition, offset, shift, flip, arrow
 } from '@floating-ui/dom';
 import { useAposTheme } from 'Modules/@apostrophecms/ui/composables/AposTheme';
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 
 const props = defineProps({
   menu: {
@@ -87,7 +87,7 @@ const props = defineProps({
     default: 'bottom'
   },
   menuOffset: {
-    type: [ Number, String ],
+    type: [ Number, Array ],
     default: 15
   },
   disabled: {
@@ -108,7 +108,7 @@ const props = defineProps({
 
 const emit = defineEmits([ 'open', 'close', 'item-clicked' ]);
 
-const menuId = ref(cuid());
+const menuId = ref(createId());
 const isOpen = ref(false);
 const placement = ref(props.menuPlacement);
 const event = ref(null);
@@ -116,6 +116,7 @@ const dropdown = ref();
 const dropdownContent = ref();
 const dropdownContentStyle = ref({});
 const arrowEl = ref();
+const menuOffset = getMenuOffset();
 
 defineExpose({
   hide,
@@ -173,6 +174,13 @@ onBeforeUnmount(() => {
   apos.bus.$off('widget-focus', hide);
 });
 
+function getMenuOffset() {
+  return {
+    mainAxis: Array.isArray(props.menuOffset) ? props.menuOffset[0] : props.menuOffset,
+    crossAxis: Array.isArray(props.menuOffset) ? (props.menuOffset[1] ?? 0) : 0
+  };
+}
+
 function hideWhenOtherOpen(id) {
   if (menuId.value !== id) {
     hide();
@@ -207,7 +215,7 @@ async function setDropdownPosition() {
   } = await computePosition(dropdown.value, dropdownContent.value, {
     placement: props.menuPlacement,
     middleware: [
-      offset(props.menuOffset),
+      offset(menuOffset),
       shift({ padding: 5 }),
       flip(),
       arrow({

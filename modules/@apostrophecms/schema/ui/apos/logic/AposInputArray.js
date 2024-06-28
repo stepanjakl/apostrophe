@@ -3,7 +3,7 @@ import AposInputFollowingMixin from 'Modules/@apostrophecms/schema/mixins/AposIn
 import AposInputConditionalFieldsMixin from 'Modules/@apostrophecms/schema/mixins/AposInputConditionalFieldsMixin';
 import { getConditionTypesObject } from 'Modules/@apostrophecms/schema/lib/conditionalFields';
 
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 import { klona } from 'klona';
 import { get } from 'lodash';
 import { Sortable } from 'sortablejs-vue3';
@@ -45,7 +45,7 @@ export default {
       return alwaysExpand(this.field, this.schema);
     },
     listId() {
-      return `sortableList-${cuid()}`;
+      return `sortableList-${createId()}`;
     },
     dragOptions() {
       return {
@@ -72,9 +72,9 @@ export default {
       const error = this.error || this.serverError;
       // Server-side errors behave differently
       const name = error?.name || error;
-      if (name === 'invalid') {
-        // Always due to a subproperty which will display its own error,
-        // don't confuse the user
+      if (name === 'invalid' && !this.serverError) {
+        // Not always due to a subproperty which will display its own error,
+        // don't confuse the user if so
         return false;
       }
       return error;
@@ -222,7 +222,7 @@ export default {
       delete this.itemsConditionalFields[_id];
     },
     add() {
-      const _id = cuid();
+      const _id = createId();
       this.items.push({
         _id,
         schemaInput: {
@@ -280,7 +280,7 @@ function modelItems(items, field, schema) {
   return items.map(item => {
     const open = alwaysExpand(field, schema);
     return {
-      _id: item._id || cuid(),
+      _id: item._id || createId(),
       schemaInput: {
         data: item || {}
       },

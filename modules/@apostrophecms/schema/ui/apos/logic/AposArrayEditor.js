@@ -1,6 +1,6 @@
 import AposModifiedMixin from 'Modules/@apostrophecms/ui/mixins/AposModifiedMixin';
 import AposEditorMixin from 'Modules/@apostrophecms/modal/mixins/AposEditorMixin';
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 import { klona } from 'klona';
 import { get } from 'lodash';
 import { detectDocChange } from 'Modules/@apostrophecms/schema/lib/detectChange';
@@ -42,7 +42,7 @@ export default {
     // Automatically add `_id` to default items
     const items = this.items.map(item => ({
       ...item,
-      _id: item._id || cuid()
+      _id: item._id || createId()
     }));
 
     return {
@@ -144,13 +144,15 @@ export default {
     if (this.next.length) {
       this.setCurrentDoc(this.next.at(0)._id);
     }
-    if (this.serverError && this.serverError.data && this.serverError.data.errors) {
+    if (this.serverError?.data?.errors?.length) {
       const first = this.serverError.data.errors[0];
-      const [ _id, name ] = first.path.split('.');
-      await this.select(_id);
-      const aposSchema = this.$refs.schema;
-      await this.$nextTick();
-      aposSchema.scrollFieldIntoView(name);
+      const [ _id, name ] = first.path?.split('.') || [];
+      if (_id) {
+        await this.select(_id);
+        const aposSchema = this.$refs.schema;
+        await this.$nextTick();
+        name && aposSchema.scrollFieldIntoView(name);
+      }
     }
     this.titleFieldChoices = await this.getTitleFieldChoices();
   },
@@ -193,7 +195,7 @@ export default {
     async add() {
       if (await this.validate(true, false)) {
         const item = this.newInstance();
-        item._id = cuid();
+        item._id = createId();
         this.next.push(item);
         await this.select(item._id);
         this.updateMinMax();
